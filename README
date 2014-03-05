@@ -4,9 +4,13 @@ Project Notes
 -------------
 
 Instructions for Running:
-./randomselection
+cat <list> ./randomselection.pl -s15 -x2
 
 Product Description:
+This script takes lines of text on STDIN and outputs a random 
+selection of records to STDOUT. -s is the sample size in percent.
+-x tells the script to pick 'n' lines together as a 
+single sample.
 Perl script written by Andrew Nisbet for Edmonton Public Library, distributable by the enclosed license.
 
 Repository Information:
