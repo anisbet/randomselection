@@ -69,12 +69,18 @@ single sample.
         transactions, two to a single transaction, -r2 will select 
 	    a random selection based on a two row per data sample.
  -s<n>: Size of the sample, number of records to pull selected at random.
+        If -f is used the sample size is an absolute number of random rows.
+        If data is streamed from stdin, -s represents the percentage of 
+        rows selected from the stream. This is because the length of a 
+        stream`s can be arbitrarily long, and is not known at run time.
  -t   : Output tests.
  -x   : This (help) message.
 
 example: $0 -x
 example: $0 -f"big.lst" -s200
   Select 200 records from the above file at random.
+example: cat big.lst | $0 -s20 
+  Prints 20\% of the lines from the streamed file. Using 100 will print every line.
 example: seluser -oUB | $0 -n7
   Which would print out every 7th record from the seluser command.
 example: cat data.lst | $0 -s10 -r2
@@ -136,10 +142,26 @@ sub fillRandomNumberList( $$ )
 	@ROW_SELECTION = sort { $a <=> $b } keys %$randomHash;
 }
 
+# Generates a series of random numbers starting at START
+# and ending with END.
+# param:  START value, usually 1.
+# param:  END value.
+# return: a random number within the stated range.
 sub generateRandom( $$ )
 {
 	my ($x, $y) = @_;
 	return int( rand( $y - $x ) ) + $x;
+}
+
+# Enforces a number into a percent value.
+# param:  integer
+# return: percent equiv.
+sub setAsPercentage( $ )
+{
+	my $percent = shift;
+	return 0 if ( $percent < 0 );
+	return 100 if ( $percent > 99 );
+	return $percent;
 }
 
 # Kicks off the setting of various switches.
@@ -180,7 +202,15 @@ sub init
 	{
 		if ( isPositiveNumber( $opt{'s'} ) eq "true" )
 		{
-			$SAMPLE_SIZE = $opt{'s'};
+			if ( $opt{'f'} ) # input from file.
+			{
+				$SAMPLE_SIZE = $opt{'s'};
+			}
+			else
+			{
+				# Treat as percentage of stream
+				$SAMPLE_SIZE = setAsPercentage( $opt{'s'} );
+			}
 		}
 		else
 		{
@@ -226,7 +256,30 @@ if ( $opt{'f'} )
 }
 else # Data from STDIN and we don't know how much there is.
 {
-
+	my $lineCount = 0;
+	my $frame = 0; # The frame increments every 100 lines. We use the frame + random number as an offset into that frame.
+	# Here we assume that within every 100 lines we will make a sample.
+	fillRandomNumberList( 1, 100 );
+	my $nextLineSelection = computeWhichLineIsNext(); 
+	while(<>)
+	{
+		$lineCount++;
+		if ( $lineCount == $nextLineSelection + $frame * 100 )
+		{
+			print "LINE $lineCount:" if ( $opt{'t'} );
+			print $_;
+			$nextLineSelection = computeWhichLineIsNext();
+			if ( $nextLineSelection == -1 )
+			{
+				fillRandomNumberList( 1, 100 );
+				$nextLineSelection = computeWhichLineIsNext();
+			}
+		}
+		if ( $lineCount % 100 == 0 )
+		{
+			$frame++;
+		}
+	}
 }
 
 # EOF
