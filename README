@@ -4,13 +4,15 @@ Project Notes
 -------------
 
 Instructions for Running:
-cat <list> ./randomselection.pl -s15 -x2
+cat <list> ./randomselection.pl -s15 
+ ./randomselection.pl -s15 -f"test_data.lst"
 
 Product Description:
-This script takes lines of text on STDIN and outputs a random 
-selection of records to STDOUT. -s is the sample size in percent.
--x tells the script to pick 'n' lines together as a 
-single sample.
+This script takes lines of text on STDIN or from a file if -f is used, and outputs a random 
+selection of records to STDOUT. -s is the sample size in percent if the data is streaming
+on STDIN and a absolute sample size if the input is from -f, because the total size of the file
+is known, and a better dispersion of samples can be computed.
+
 Perl script written by Andrew Nisbet for Edmonton Public Library, distributable by the enclosed license.
 
 Repository Information:

@@ -26,6 +26,7 @@
 # Author:  Andrew Nisbet, Edmonton Public Library
 # Created: Tue Mar 4 07:29:56 MST 2014
 # Rev: 
+#          0.2 - Removed the -r. 
 #          0.1 - Dev. 
 #
 ####################################################
@@ -42,7 +43,7 @@ use Getopt::Std;
 $ENV{'PATH'}  = qq{:/s/sirsi/Unicorn/Bincustom:/s/sirsi/Unicorn/Bin:/usr/bin:/usr/sbin};
 $ENV{'UPATH'} = qq{/s/sirsi/Unicorn/Config/upath};
 ###############################################
-my $VERSION        = qq{0.1};
+my $VERSION        = qq{0.2};
 my $SAMPLE_SIZE    = qq{0};
 my $SAMPLE_NTH     = qq{0};
 my $SAMPLE_ROWS    = qq{1};
@@ -55,19 +56,15 @@ sub usage()
 {
     print STDERR << "EOF";
 
-	usage: $0 [-x]
+	usage: $0 [-xt] [-f<name>] [-s<\%\|n>]
 Usage notes for randomselection.pl.
-This script takes lines of text on STDIN and outputs a random
-selection of records to STDOUT. -s is the sample size in percent.
--r tells the script to pick 'n' lines together as a
-single sample.
+This script takes lines of text on STDIN or from a file and outputs a random
+selection of records to STDOUT. -s specifies the sample size. If the selection
+is coming from STDIN, -s means sample a percentage of the input lines. Any values
+greater than 100 is capped at 100 percent, which in effect means output all lines.
+If the input is coming from a file, -s means output exactly 'n' number of lines.
 
  -f<f>: Take input from file. This gives a better random distribution.
- -n<n>: Select every 'n' line of the file. If the file is very large or
-        of unknown size then selecting every 'n'th row might make sense.
- -r<n>: Rows to output as a single sample. If the data is API server
-        transactions, two to a single transaction, -r2 will select 
-	    a random selection based on a two row per data sample.
  -s<n>: Size of the sample, number of records to pull selected at random.
         If -f is used the sample size is an absolute number of random rows.
         If data is streamed from stdin, -s represents the percentage of 
@@ -83,9 +80,8 @@ example: cat big.lst | $0 -s20
   Prints 20\% of the lines from the streamed file. Using 100 will print every line.
 example: seluser -oUB | $0 -n7
   Which would print out every 7th record from the seluser command.
-example: cat data.lst | $0 -s10 -r2
-  Which would print 10 records at random the understanding that two lines
-  make up a single record.
+example: cat data.lst | $0 -s10 
+  Which would print 10 records at random.
 Version: $VERSION
 EOF
     exit;
@@ -113,7 +109,6 @@ sub test()
 	print isPositiveNumber( "1000" )." should be true\n";
 	print "nth row selection set to $SAMPLE_NTH\n";
 	print "Sample size set to $SAMPLE_SIZE\n";
-	print "Row selection set to $SAMPLE_ROWS\n";
 }
 
 # Computes what the next line number to select is.
@@ -126,13 +121,17 @@ sub computeWhichLineIsNext( )
 	return $nextVal;
 }
 
-
-sub fillRandomNumberList( $$ )
+# Fills an array with count random numbers from start to end.
+# param:  start the lowest possible random number.
+# param:  end the highest random number you might see.
+# param:  The number or count of random numbers you want.
+# return: integer value of next line or -1 if no more selections to be made.
+sub fillRandomNumberList( $$$ )
 {
-	my ( $start, $end ) = @_;
+	my ( $start, $end, $count ) = @_;
 	my $randomHash = {};
 	my $i = 0;
-	while ( $i < $SAMPLE_SIZE )
+	while ( $i < $count )
 	{
 		# Add one because a selection of 1-100 gives numbers from 1-99 and never 100.
 		my $r = generateRandom( $start, $end +1 );
@@ -169,23 +168,10 @@ sub setAsPercentage( $ )
 # return: 
 sub init
 {
-    my $opt_string = 'f:n:r:s:tx';
+    my $opt_string = 'f:n:s:tx';
     getopts( "$opt_string", \%opt ) or usage();
     usage() if ( $opt{'x'} );
-	
-	if ( $opt{'r'} )
-	{
-		if ( isPositiveNumber( $opt{'r'} ) eq "true" )
-		{
-			$SAMPLE_ROWS = $opt{'r'};
-		}
-		else
-		{
-			print STDERR "**Error: successive row count not a legal value: ".$opt{'r'}."\n";
-			usage();
-		}
-	}
-	
+
 	if ( $opt{'n'} )
 	{
 		if ( isPositiveNumber( $opt{'n'} ) eq "true" )
@@ -237,11 +223,11 @@ if ( $opt{'f'} )
 	# Now we know how many lines in the file there are, we can figure out which lines to choose.
 	# To do that we fill an array with '-s' random numbers selected from 1 to EOF# and sort them.
 	# Re-read the file and print out the line when it matches.
-	fillRandomNumberList( 1, $lineCount );
+	fillRandomNumberList( 1, $lineCount, $opt{'s'} );
+	my $nextLineSelection = computeWhichLineIsNext();
 	# Re open the file and when the random line shows up print it out.
 	open FILE, "<$fileIn" or die "***Error: can't open $fileIn, $!\n";
 	$lineCount = 0;
-	my $nextLineSelection = computeWhichLineIsNext();
 	while(<FILE>)
 	{
 		$lineCount++;
@@ -259,8 +245,8 @@ else # Data from STDIN and we don't know how much there is.
 	my $lineCount = 0;
 	my $frame = 0; # The frame increments every 100 lines. We use the frame + random number as an offset into that frame.
 	# Here we assume that within every 100 lines we will make a sample.
-	fillRandomNumberList( 1, 100 );
-	my $nextLineSelection = computeWhichLineIsNext(); 
+	fillRandomNumberList( 1, 100, $opt{'s'} );
+	my $nextLineSelection = computeWhichLineIsNext();
 	while(<>)
 	{
 		$lineCount++;
@@ -271,7 +257,7 @@ else # Data from STDIN and we don't know how much there is.
 			$nextLineSelection = computeWhichLineIsNext();
 			if ( $nextLineSelection == -1 )
 			{
-				fillRandomNumberList( 1, 100 );
+				fillRandomNumberList( 1, 100, $opt{'s'} );
 				$nextLineSelection = computeWhichLineIsNext();
 			}
 		}
