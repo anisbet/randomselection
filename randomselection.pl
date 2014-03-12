@@ -26,6 +26,7 @@
 # Author:  Andrew Nisbet, Edmonton Public Library
 # Created: Tue Mar 4 07:29:56 MST 2014
 # Rev: 
+#          0.3 - Updated the usage message. 
 #          0.2 - Removed the -r. 
 #          0.1 - Dev. 
 #
@@ -70,6 +71,12 @@ If the input is coming from a file, -s means output exactly 'n' number of lines.
         If data is streamed from stdin, -s represents the percentage of 
         rows selected from the stream. This is because the length of a 
         stream`s can be arbitrarily long, and is not known at run time.
+		If the stream contains less than 100 lines the actual number of
+        random selections will be less than specified. If streaming a file
+        and -s is set to 100 all lines in the stream will be printed. -s 
+		is a manditory field, ommition causes and error and a usage message
+		to be issued. If -s is set to 0, no lines will be output (very helpful
+        I know).
  -t   : Output tests.
  -x   : This (help) message.
 
@@ -78,10 +85,8 @@ example: $0 -f"big.lst" -s200
   Select 200 records from the above file at random.
 example: cat big.lst | $0 -s20 
   Prints 20\% of the lines from the streamed file. Using 100 will print every line.
-example: seluser -oUB | $0 -n7
-  Which would print out every 7th record from the seluser command.
 example: cat data.lst | $0 -s10 
-  Which would print 10 records at random.
+  Which would print 10\% of records at random.
 Version: $VERSION
 EOF
     exit;
