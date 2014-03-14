@@ -44,7 +44,7 @@ use Getopt::Std;
 $ENV{'PATH'}  = qq{:/s/sirsi/Unicorn/Bincustom:/s/sirsi/Unicorn/Bin:/usr/bin:/usr/sbin};
 $ENV{'UPATH'} = qq{/s/sirsi/Unicorn/Config/upath};
 ###############################################
-my $VERSION        = qq{0.2};
+my $VERSION        = qq{0.3};
 my $SAMPLE_SIZE    = qq{0};
 my $SAMPLE_NTH     = qq{0};
 my $SAMPLE_ROWS    = qq{1};
