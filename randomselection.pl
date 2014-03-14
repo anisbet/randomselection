@@ -71,11 +71,11 @@ If the input is coming from a file, -s means output exactly 'n' number of lines.
         If data is streamed from stdin, -s represents the percentage of 
         rows selected from the stream. This is because the length of a 
         stream`s can be arbitrarily long, and is not known at run time.
-		If the stream contains less than 100 lines the actual number of
+        If the stream contains less than 100 lines the actual number of
         random selections will be less than specified. If streaming a file
         and -s is set to 100 all lines in the stream will be printed. -s 
-		is a manditory field, ommition causes and error and a usage message
-		to be issued. If -s is set to 0, no lines will be output (very helpful
+        is a manditory field, ommition causes and error and a usage message
+        to be issued. If -s is set to 0, no lines will be output (very helpful
         I know).
  -t   : Output tests.
  -x   : This (help) message.
