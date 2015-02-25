@@ -26,6 +26,7 @@
 # Author:  Andrew Nisbet, Edmonton Public Library
 # Created: Tue Mar 4 07:29:56 MST 2014
 # Rev: 
+#          0.5 - Added notes to usage. 
 #          0.4 - Added randomization of file. 
 #          0.3 - Updated the usage message. 
 #          0.2 - Removed the -r. 
@@ -45,7 +46,7 @@ use Getopt::Std;
 $ENV{'PATH'}  = qq{:/s/sirsi/Unicorn/Bincustom:/s/sirsi/Unicorn/Bin:/usr/bin:/usr/sbin};
 $ENV{'UPATH'} = qq{/s/sirsi/Unicorn/Config/upath};
 ###############################################
-my $VERSION        = qq{0.4};
+my $VERSION        = qq{0.5};
 my $SAMPLE_SIZE    = qq{0};
 my $SAMPLE_NTH     = qq{0};
 my $SAMPLE_ROWS    = qq{1};
@@ -67,7 +68,7 @@ greater than 100 is capped at 100 percent, which in effect means output all line
 If the input is coming from a file, -s means output exactly 'n' number of lines.
 
  -f<f>: Take input from file. This gives a better random distribution.
- -r   : Randomize all lines in a file.
+ -r   : Randomize all lines in a file (lines from STDIN not supported yet).
  -s<n>: Size of the sample, number of records to pull selected at random.
         If -f is used the sample size is an absolute number of random rows.
         If data is streamed from stdin, -s represents the percentage of 
