@@ -26,6 +26,7 @@
 # Author:  Andrew Nisbet, Edmonton Public Library
 # Created: Tue Mar 4 07:29:56 MST 2014
 # Rev: 
+#          0.4 - Added randomization of file. 
 #          0.3 - Updated the usage message. 
 #          0.2 - Removed the -r. 
 #          0.1 - Dev. 
@@ -44,7 +45,7 @@ use Getopt::Std;
 $ENV{'PATH'}  = qq{:/s/sirsi/Unicorn/Bincustom:/s/sirsi/Unicorn/Bin:/usr/bin:/usr/sbin};
 $ENV{'UPATH'} = qq{/s/sirsi/Unicorn/Config/upath};
 ###############################################
-my $VERSION        = qq{0.3};
+my $VERSION        = qq{0.4};
 my $SAMPLE_SIZE    = qq{0};
 my $SAMPLE_NTH     = qq{0};
 my $SAMPLE_ROWS    = qq{1};
@@ -57,7 +58,7 @@ sub usage()
 {
     print STDERR << "EOF";
 
-	usage: $0 [-xt] [-f<name>] [-s<\%\|n>]
+	usage: $0 [-xrt] [-f<name>] [-s<\%\|n>]
 Usage notes for randomselection.pl.
 This script takes lines of text on STDIN or from a file and outputs a random
 selection of records to STDOUT. -s specifies the sample size. If the selection
@@ -66,6 +67,7 @@ greater than 100 is capped at 100 percent, which in effect means output all line
 If the input is coming from a file, -s means output exactly 'n' number of lines.
 
  -f<f>: Take input from file. This gives a better random distribution.
+ -r   : Randomize all lines in a file.
  -s<n>: Size of the sample, number of records to pull selected at random.
         If -f is used the sample size is an absolute number of random rows.
         If data is streamed from stdin, -s represents the percentage of 
@@ -168,12 +170,32 @@ sub setAsPercentage( $ )
 	return $percent;
 }
 
+# Fills an array with count random numbers from start to end.
+# param:  start the lowest possible random number.
+# param:  end the highest random number you might see.
+# param:  The number or count of random numbers you want.
+# return: integer value of next line or -1 if no more selections to be made.
+sub fillRandomNumberListNoSort( $$$ )
+{
+	my ( $start, $end, $count ) = @_;
+	my $randomHash = {};
+	my $i = 0;
+	while ( $i < $count )
+	{
+		# Add one because a selection of 1-100 gives numbers from 1-99 and never 100.
+		my $r = generateRandom( $start, $end +1 );
+		$randomHash->{$r} = 1;
+		$i = scalar keys %$randomHash;
+	}
+	@ROW_SELECTION = keys %$randomHash;
+}
+
 # Kicks off the setting of various switches.
 # param:  
 # return: 
 sub init
 {
-    my $opt_string = 'f:n:s:tx';
+    my $opt_string = 'f:n:rs:tx';
     getopts( "$opt_string", \%opt ) or usage();
     usage() if ( $opt{'x'} );
 
@@ -207,6 +229,36 @@ sub init
 		{
 			print STDERR "**Error: percent not a legal value: ".$opt{'s'}."\n";
 			usage();
+		}
+	}
+	if ( $opt{'r'} )
+	{
+		my $fileSize = 0;
+		if ( $opt{'f'} ) # input from file.
+		{
+			my $fileSize = 0;
+			my $fileIn   = $opt{'f'};
+			my @lines = ();
+			open FILE, "<$fileIn" or die "***Error: can't open $fileIn, $!\n";
+			while (<FILE>)
+			{
+				$fileSize++;
+				push @lines, $_;
+			}
+			close FILE;
+			fillRandomNumberListNoSort(0, $fileSize +1, $fileSize);
+			for my $lineNo (@ROW_SELECTION)
+			{
+				print $lines[$lineNo];
+			}
+			exit;
+		}
+		else
+		{
+			# Treat as percentage of stream
+			$SAMPLE_SIZE = setAsPercentage( "100" );
+			print STDERR "*Warning unsupported option with -r, use -f as well.\n";
+			exit;
 		}
 	}
 }
