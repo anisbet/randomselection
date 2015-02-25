@@ -175,7 +175,7 @@ sub setAsPercentage( $ )
 # return: integer value of next line or -1 if no more selections to be made.
 sub fillRandomNumberListNoSort( $ )
 {
-	my $count      = @_;
+	my ( $count ) = @_;
 	my $randomHash = {};
 	my $i = 0;
 	while ( $i != $count )
@@ -186,6 +186,7 @@ sub fillRandomNumberListNoSort( $ )
 		$i = scalar keys %$randomHash;
 	}
 	@ROW_SELECTION = keys %$randomHash;
+	# @ROW_SELECTION = sort { $a <=> $b } keys %$randomHash;
 }
 
 # Kicks off the setting of various switches.
@@ -244,10 +245,12 @@ sub init
 				push @lines, $_;
 			}
 			close FILE;
-			fillRandomNumberListNoSort(0, $fileSize +1, $fileSize);
+			fillRandomNumberListNoSort( $fileSize );
+			my $index = 0;
 			for my $lineNo (@ROW_SELECTION)
 			{
 				print $lines[$lineNo];
+				$index++;
 			}
 			exit 0;
 		}
@@ -255,7 +258,7 @@ sub init
 		{
 			# Treat as percentage of stream
 			$SAMPLE_SIZE = setAsPercentage( "100" );
-			print STDERR "*Warning unsupported option with -r, use -f as well.\n";
+			print STDERR "*Warning unsupported option with -r, use -f file option.\n";
 			exit 0;
 		}
 	}
