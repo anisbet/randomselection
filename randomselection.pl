@@ -171,19 +171,17 @@ sub setAsPercentage( $ )
 }
 
 # Fills an array with count random numbers from start to end.
-# param:  start the lowest possible random number.
-# param:  end the highest random number you might see.
 # param:  The number or count of random numbers you want.
 # return: integer value of next line or -1 if no more selections to be made.
-sub fillRandomNumberListNoSort( $$$ )
+sub fillRandomNumberListNoSort( $ )
 {
-	my ( $start, $end, $count ) = @_;
+	my $count      = @_;
 	my $randomHash = {};
 	my $i = 0;
-	while ( $i < $count )
+	while ( $i != $count )
 	{
 		# Add one because a selection of 1-100 gives numbers from 1-99 and never 100.
-		my $r = generateRandom( $start, $end +1 );
+		my $r = generateRandom( 0, $count );
 		$randomHash->{$r} = 1;
 		$i = scalar keys %$randomHash;
 	}
@@ -251,14 +249,14 @@ sub init
 			{
 				print $lines[$lineNo];
 			}
-			exit;
+			exit 0;
 		}
 		else
 		{
 			# Treat as percentage of stream
 			$SAMPLE_SIZE = setAsPercentage( "100" );
 			print STDERR "*Warning unsupported option with -r, use -f as well.\n";
-			exit;
+			exit 0;
 		}
 	}
 }
